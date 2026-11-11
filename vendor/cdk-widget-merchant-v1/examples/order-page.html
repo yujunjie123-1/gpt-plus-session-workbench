@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>订单兑换接入示例</title>
+<main><h1>订单兑换</h1><p id="message" role="status"></p><div id="redemption"></div></main>
+<script src="../sdk/cdk-widget.js"></script>
+<script>
+// Replace with your server-rendered, non-PII order identifier. No CDK in URL/HTML.
+const orderId = 'REPLACE-WITH-REAL-ORDER-ID';
+const widget = CDKRedemption.mount({
+  container: '#redemption',
+  orderId,
+  async getDelivery({orderId}) {
+    const response = await fetch('/api/orders/' + encodeURIComponent(orderId) + '/redemption-card', {
+      method:'GET', credentials:'same-origin', cache:'no-store'
+    });
+    if (!response.ok) throw new Error('Order delivery not available');
+    return response.json(); // { orderId, code }, after backend verifies ownership, payment and delivery.
+  },
+  onError({message}) { document.getElementById('message').textContent = message; },
+  onStatusChange({status}) {
+    // Presentation only. Never pay refunds or change settlement based on browser events.
+    document.getElementById('message').textContent = status === 'completed' ? '兑换完成' : '';
+  }
+});
+// React/Vue route cleanup: call widget.destroy() when leaving the order page.
+</script>
+</html>

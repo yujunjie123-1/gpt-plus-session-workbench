@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>ChatGPT 自助兑换</title>
+  <link rel="stylesheet" href="./widget.css">
+  <script type="module" src="./widget.mjs"></script>
+</head>
+<body>
+  <main id="widget" aria-label="ChatGPT 自助兑换">
+    <header><h1>ChatGPT 自助兑换</h1><span id="order-label"></span></header>
+    <ol class="steps" aria-label="兑换进度">
+      <li data-step="session">填写 Session</li>
+      <li data-step="confirm">确认兑换</li>
+      <li data-step="result">查看结果</li>
+    </ol>
+    <section id="screen" aria-label="兑换内容"><h2>正在加载兑换资格</h2></section>
+    <p id="error" role="alert" hidden></p>
+    <p id="notice" role="status" aria-live="polite">正在连接订单</p>
+    <footer>由 <a href="https://cdk.bar" target="_blank" rel="noopener noreferrer">cdk.bar</a> 提供兑换服务</footer>
+  </main>
+</body>
+</html>

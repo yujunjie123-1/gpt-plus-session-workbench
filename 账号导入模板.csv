@@ -1,0 +1,3 @@
+﻿email,password,totp,mail_url,eligibility_months
+owner@example.com,,,,3
+second@example.com,,,,1

@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "本机工作台 · Edge Session 助手",
+  "version": "0.3.1",
+  "description": "在正常 Edge 中自动填写 GPT 登录资料和验证码，将 Session 交给本机工作台。",
+  "minimum_chrome_version": "120",
+  "permissions": ["cookies", "scripting", "storage", "alarms"],
+  "host_permissions": ["https://chatgpt.com/*", "https://auth.openai.com/*", "http://127.0.0.1/*"],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "content_scripts": [{"matches": ["http://127.0.0.1/*"], "js": ["workbench-connect.js"], "run_at": "document_idle"}],
+  "action": {"default_title": "本机 Session 助手", "default_popup": "popup.html"},
+  "incognito": "spanning",
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"}
+}
