@@ -193,9 +193,17 @@ class InventoryBrowserTest(unittest.TestCase):
         self.page.get_by_role('button',name='Plus',exact=True).click()
         self.assertNotIn(code,self.page.locator('main').inner_text())
         row=self.page.locator('tbody tr').first
+        self.provider.redeems=1
+        row.get_by_role('button',name='核对',exact=True).click()
+        expect(row).to_contain_text('已使用')
         row.get_by_role('button',name='详情',exact=True).click()
         dialog=self.page.get_by_role('dialog')
         expect(dialog).to_contain_text(code)
+        expect(dialog).to_contain_text('ow••••er@example.com')
+        expect(dialog).to_contain_text('上游产品')
+        expect(dialog).to_contain_text('上游套餐')
+        expect(dialog).to_contain_text('上游使用时间')
+        expect(dialog).to_contain_text('plus')
         dialog.get_by_role('button',name='复制完整卡密',exact=True).click()
         expect(dialog.locator('.copy-status')).to_have_text('已复制')
         self.assertEqual(self.page.evaluate('window.testClipboard'),code)

@@ -24,7 +24,9 @@ class StockProvider(ProviderFixture):
 
     async def lookup(self,code):
         return {'cdk_code':code,'status':'used' if self.redeems and not self.uncertain else 'unused',
-                'used':bool(self.redeems and not self.uncertain),'account_email':self.email}
+                'used':bool(self.redeems and not self.uncertain),'account_email':self.email,
+                'product':'gpt','plan':'plus',
+                'used_at':'2026-11-12T10:20:30+08:00' if self.redeems and not self.uncertain else ''}
 
     async def result(self,token):
         if self.uncertain:
@@ -321,6 +323,23 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual(self.store.cards[key]['status'],'used')
         self.assertEqual(self.store.rows,{})
         self.assertEqual(self.store.charge_tasks,{})
+
+    def test_card_lookup_preserves_safe_upstream_facts_for_explicit_detail(self):
+        self.cards()
+        provider=StockProvider()
+        provider.redeems=1
+        self.provider(provider)
+        key=next(iter(self.store.cards))
+        self.engine.inventory_command('check-cards',{'ids':[key]})
+        wait_until(lambda:self.engine.inventory_checks[key].done())
+        detail=self.engine.inventory_command('card-detail',{'id':key})
+        self.assertEqual(detail['provider_account_email'],'ow••••er@example.com')
+        self.assertEqual(detail['provider_product'],'gpt')
+        self.assertEqual(detail['provider_plan'],'plus')
+        self.assertEqual(detail['provider_used_at'],'2026-11-12T10:20:30+08:00')
+        public=json.dumps(self.engine.inventory_snapshot(),ensure_ascii=False)
+        self.assertNotIn('owner@example.com',public)
+        self.assertNotIn(b'owner@example.com',self.path.read_bytes())
 
     def test_deleting_account_keeps_recharge_identity(self):
         key=self.account()

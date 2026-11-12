@@ -63,6 +63,25 @@ def mask(value):
     return value[:4] + '••••' + value[-4:] if len(value) > 8 else '••••'
 
 
+def mask_email(value):
+    """Keep only a safe, human-checkable portion of an upstream email."""
+    text = str(value or '').strip()
+    if '@' not in text or any(char.isspace() for char in text) or len(text) > 320:
+        return ''
+    local, domain = text.rsplit('@', 1)
+    if not local or not domain or '.' not in domain:
+        return ''
+    if any(marker in local for marker in ('*', '•')):
+        return text
+    if len(local) <= 2:
+        masked = local[0] + '••••' + (local[-1] if len(local) == 2 else '')
+    elif len(local) <= 4:
+        masked = local[0] + '••••' + local[-1]
+    else:
+        masked = local[:2] + '••••' + local[-2:]
+    return masked + '@' + domain
+
+
 from .inventory_store import InventoryStoreMixin
 from .account_policy import AccountPolicyMixin
 

@@ -3,7 +3,7 @@ import hashlib
 import json
 import re
 import uuid
-from .store import crypt, eligibility, mail_address, mask, now
+from .store import crypt, eligibility, mail_address, mask, mask_email, now
 from .products import PRODUCTS
 
 ACTIVE = {'queued', 'running', 'login', 'ready', 'preflight', 'confirm', 'pending'}
@@ -518,7 +518,9 @@ class InventoryStoreMixin:
             for card in self.cards.values():
                 if card.get('archived'):
                     continue
-                public={key:value for key,value in card.items() if key not in ('secret','digest')}
+                public={key:value for key,value in card.items() if key not in (
+                    'secret','digest','provider_account_email','provider_product',
+                    'provider_plan','provider_used_at')}
                 reason=self.inventory_card_delete_reason(card)
                 public.update(deletable=not bool(reason),delete_block_reason=reason)
                 edit_reason=self.inventory_card_spec_reason(card)
@@ -540,6 +542,8 @@ class InventoryStoreMixin:
             card=dict(self.cards[key])
             if card.get('archived'):
                 raise ValueError('卡密已从库存移除')
+            if not isinstance(remote, dict):
+                raise ValueError('上游核对结果格式异常')
             state=lookup_state(remote)
             task=self.charge_tasks.get(card.get('task_id'))
             if task_unresolved(task):
@@ -551,6 +555,19 @@ class InventoryStoreMixin:
                 self._inventory_write('cards',card)
                 self.db.commit()
                 return
+            provider_email = mask_email(remote.get('account_email'))
+            provider_product = remote.get('product') if isinstance(remote.get('product'), str) else ''
+            provider_plan = remote.get('plan') if isinstance(remote.get('plan'), str) else ''
+            provider_used_at = remote.get('used_at') if isinstance(remote.get('used_at'), str) else ''
+            for field, value, limit in (
+                ('provider_product', provider_product.strip(), 128),
+                ('provider_plan', provider_plan.strip(), 128),
+                ('provider_used_at', provider_used_at.strip(), 64),
+            ):
+                if value and len(value) <= limit:
+                    card[field] = value
+            if provider_email:
+                card['provider_account_email'] = provider_email
             can_release = remote.get('can_resubmit') is True
             card['status']=('used' if state=='completed' else 'unused' if
                             (state=='unused' and can_release) or
@@ -586,7 +603,9 @@ class InventoryStoreMixin:
                 raise ValueError('该卡密没有可查看的完整值')
             detail = {field: card.get(field) for field in (
                 'id','sequence','masked','sku','status','created','updated',
-                'checked_at','used_at','task_id','check_error','check_error_code')}
+                'checked_at','used_at','provider_account_email','provider_product',
+                'provider_plan','provider_used_at','task_id','check_error',
+                'check_error_code')}
             detail['code'] = code
             return detail
 
